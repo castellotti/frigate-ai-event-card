@@ -14,7 +14,7 @@ You can use one card per camera and stack them freely. Cameras from different Fr
 
 Create one wrapper script per Frigate instance (the JWT and base URL are hardcoded in the script because HA's `command_line` platform does **not** expand `!secret` tags inside command strings).
 
-**`/config/scripts/fetch_frigate_events_1.sh`** (instance 1 — two cameras):
+**`/config/scripts/fetch_frigate_events_1.sh`** (instance 1 - two cameras):
 ```bash
 #!/bin/sh
 FRIGATE_BASE_URL="https://YOUR_FRIGATE_HOST_1:8971"
@@ -112,10 +112,10 @@ cards:
 
 The slug is the integration's client ID registered in HA. It appears in:
 
-- **Settings → Integrations → Frigate (your instance) → three-dot menu → System information** — look for `client_id`
+- **Settings → Integrations → Frigate (your instance) → three-dot menu → System information** - look for `client_id`
 - The HA Frigate VOD proxy path: `/api/frigate/{slug}/vod/...`
 
-The slug is set when the integration is added. It defaults to `frigate` for the first instance; a second instance may use `frigate-2`, `frigate-gpu`, or another value — check your integration config.
+The slug is set when the integration is added. It defaults to `frigate` for the first instance; a second instance may use `frigate-2`, `frigate-gpu`, or another value - check your integration config.
 
 ## Tips
 

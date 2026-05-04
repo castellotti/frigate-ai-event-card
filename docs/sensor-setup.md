@@ -79,7 +79,7 @@ ha core restart
 
 ## Step 6: Verify the Sensor
 
-In HA **Developer Tools → States**, search for your sensor entity (e.g. `sensor.frigate_camera_front_events`). The state should be a number (event count). Click the sensor to inspect its attributes — you should see an `events` array containing event objects.
+In HA **Developer Tools → States**, search for your sensor entity (e.g. `sensor.frigate_camera_front_events`). The state should be a number (event count). Click the sensor to inspect its attributes - you should see an `events` array containing event objects.
 
 If the sensor state is `unavailable`:
 - Check HA logs for REST sensor errors
@@ -92,7 +92,7 @@ The card renders thumbnails via `<img>` tags in a Shadow DOM context. Because of
 
 ### Strategy 1: Cache to `/config/www/` (recommended)
 
-This is what `frigate_events.py` does automatically. Snapshots are downloaded server-side (where the JWT is available) and stored as `/config/www/frigate_thumbnails/{id}_snap.jpg`. HA serves these at `/local/frigate_thumbnails/{id}_snap.jpg` — same-origin to HA, no browser auth needed.
+This is what `frigate_events.py` does automatically. Snapshots are downloaded server-side (where the JWT is available) and stored as `/config/www/frigate_thumbnails/{id}_snap.jpg`. HA serves these at `/local/frigate_thumbnails/{id}_snap.jpg` - same-origin to HA, no browser auth needed.
 
 ### Strategy 2: HA Frigate proxy
 

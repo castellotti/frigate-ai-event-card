@@ -13,7 +13,7 @@ Direct Frigate snapshot URLs require the frigate_token JWT cookie. That cookie
 is SameSite=Lax, so browsers will NOT send it on cross-origin subresource
 requests (e.g. an <img> tag in a Lovelace card loaded from your-ha-instance:8123
 requesting an image from your-frigate-host:8971). Caching snapshots locally
-via this script produces /local/... URLs that HA serves directly — no JWT
+via this script produces /local/... URLs that HA serves directly - no JWT
 needed in the browser.
 
 Environment variables

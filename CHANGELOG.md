@@ -11,8 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release
 - Filmstrip of event thumbnails with configurable height and limit
-- `limit: auto` — ResizeObserver-driven slot calculation that fills available width
-- `scrollable: true` — horizontal scroll filmstrip showing all events
+- `limit: auto` - ResizeObserver-driven slot calculation that fills available width
+- `scrollable: true` - horizontal scroll filmstrip showing all events
 - `time_window` filter (`24h`, `7d`, `30d`, `all`, or custom `<N>m`/`<N>h`/`<N>d`)
 - Click thumbnail to open snapshot + AI description dialog
 - `<ha-markdown>` rendering for AI descriptions

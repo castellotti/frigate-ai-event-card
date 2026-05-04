@@ -1,4 +1,4 @@
-# Frigate AI Event Card — REST sensor template
+# Frigate AI Event Card - REST sensor template
 #
 # HOW IT WORKS
 # ------------
@@ -11,7 +11,7 @@
 #
 # This file shows the pure REST approach using a value_template to extract
 # what the card needs directly from the raw Frigate response. If you want
-# snapshot caching (recommended for thumbnail auth — see docs/sensor-setup.md),
+# snapshot caching (recommended for thumbnail auth - see docs/sensor-setup.md),
 # use sensor-command-line.yaml instead.
 #
 # HOW TO USE
