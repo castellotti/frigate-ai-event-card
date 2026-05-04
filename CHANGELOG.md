@@ -25,3 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Console banner on load (HACS convention)
 - `getStubConfig` for card picker preview
 - Accepts both `entity` and `sensor` config keys for compatibility
+- `aria-label` with label and timestamp on thumbnail images
+- Fallback plain-text rendering when `<ha-markdown>` is unavailable
+- Defensive filtering of malformed events missing required fields
+- Console banner includes documentation URL
+- Screenshots in `docs/`
