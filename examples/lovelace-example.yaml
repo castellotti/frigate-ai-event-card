@@ -1,0 +1,58 @@
+# Frigate AI Event Card — Lovelace configuration examples
+
+# ── Example 1: Minimal ───────────────────────────────────────────────────────
+# Just entity + title. All other options use defaults.
+# limit: auto fills available width; filter_no_description: true hides events
+# without a description; show_details: true renders the expandable list.
+- type: custom:frigate-ai-event-card
+  entity: sensor.frigate_camera_front_events
+  title: Front Door
+
+# ── Example 2: Full options ──────────────────────────────────────────────────
+# Every config key set explicitly.
+- type: custom:frigate-ai-event-card
+  entity: sensor.frigate_camera_driveway_events
+  title: Driveway
+  limit: 10
+  scrollable: false
+  thumbnail_height: 100
+  time_window: 7d
+  filter_no_description: true
+  show_details: true
+  show_metadata: true
+  frigate_slug: frigate
+  clip_button_text: "▶ Watch clip"
+  provider_label: "Powered by Qwen3-VL"
+
+# ── Example 3: Scrollable filmstrip ──────────────────────────────────────────
+# Horizontal scroll shows all events regardless of card width.
+- type: custom:frigate-ai-event-card
+  entity: sensor.frigate_camera_garage_events
+  title: Garage
+  scrollable: true
+  thumbnail_height: 80
+  frigate_slug: frigate
+
+# ── Example 4: Multi-camera vertical stack ───────────────────────────────────
+# One card per camera, grouped with vertical-stack. Cameras can be on different
+# Frigate instances (different frigate_slug values).
+- type: vertical-stack
+  cards:
+    - type: custom:frigate-ai-event-card
+      entity: sensor.frigate_camera_front_door_events
+      title: Front Door
+      limit: 8
+      frigate_slug: frigate
+
+    - type: custom:frigate-ai-event-card
+      entity: sensor.frigate_camera_driveway_events
+      title: Driveway
+      limit: 8
+      frigate_slug: frigate
+
+    - type: custom:frigate-ai-event-card
+      entity: sensor.frigate_gpu_camera_gate_events
+      title: Gate (GPU)
+      limit: 8
+      frigate_slug: frigate-gpu
+      provider_label: "Powered by Qwen3-VL"

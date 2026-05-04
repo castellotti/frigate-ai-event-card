@@ -1,0 +1,58 @@
+# Frigate GenAI configuration snippets
+#
+# These go in /srv/frigate/config/config.yml and require Frigate 0.17+.
+# Pick ONE provider block and add it to your Frigate config.
+# Each block is self-contained — only one genai: key is supported per config.
+#
+# Docs: https://docs.frigate.video/configuration/genai/
+
+# ── Option A: Ollama (local, recommended for privacy) ────────────────────────
+genai:
+  enabled: true
+  provider: ollama
+  base_url: http://YOUR_OLLAMA_HOST:11434
+  model: qwen2-vl:7b-instruct   # or llava, llava-phi3, moondream, etc.
+  prompt: >
+    Analyze this security camera image and describe what you see in 1-2 sentences.
+    Focus on people, vehicles, and notable activity. Be concise and factual.
+
+# ── Option B: OpenAI ─────────────────────────────────────────────────────────
+# genai:
+#   enabled: true
+#   provider: openai
+#   api_key: "{FRIGATE_OPENAI_KEY}"    # set env var FRIGATE_OPENAI_KEY
+#   model: gpt-4o-mini
+#   prompt: >
+#     Analyze this security camera image and describe what you see in 1-2 sentences.
+#     Focus on people, vehicles, and notable activity. Be concise and factual.
+
+# ── Option C: Anthropic (Claude) ─────────────────────────────────────────────
+# genai:
+#   enabled: true
+#   provider: anthropic
+#   api_key: "{FRIGATE_ANTHROPIC_KEY}"  # set env var FRIGATE_ANTHROPIC_KEY
+#   model: claude-haiku-4-5-20251001
+#   prompt: >
+#     Analyze this security camera image and describe what you see in 1-2 sentences.
+#     Focus on people, vehicles, and notable activity. Be concise and factual.
+
+# ── Option D: Google Gemini ───────────────────────────────────────────────────
+# genai:
+#   enabled: true
+#   provider: gemini
+#   api_key: "{FRIGATE_GEMINI_KEY}"    # set env var FRIGATE_GEMINI_KEY
+#   model: gemini-2.0-flash
+#   prompt: >
+#     Analyze this security camera image and describe what you see in 1-2 sentences.
+#     Focus on people, vehicles, and notable activity. Be concise and factual.
+
+# ── Option E: llama.cpp (OpenAI-compatible server) ────────────────────────────
+# genai:
+#   enabled: true
+#   provider: openai
+#   base_url: http://YOUR_LLAMACPP_HOST:8080/v1
+#   api_key: "none"                    # llama.cpp server ignores the key
+#   model: YOUR_MODEL_NAME
+#   prompt: >
+#     Analyze this security camera image and describe what you see in 1-2 sentences.
+#     Focus on people, vehicles, and notable activity. Be concise and factual.

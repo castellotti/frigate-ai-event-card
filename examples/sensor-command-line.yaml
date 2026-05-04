@@ -1,0 +1,42 @@
+# Frigate AI Event Card — command_line sensor variant
+#
+# Use this instead of the REST sensor if you are on an older HA version that
+# does not support the modern rest: platform, or if you prefer curl + a shell
+# script.
+#
+# Prerequisites
+# -------------
+# - frigate_events.py installed at /config/scripts/frigate_events.py
+# - FRIGATE_BASE_URL and FRIGATE_JWT set in the environment, OR pass them
+#   inline as shown below.
+#
+# HOW TO GENERATE A JWT
+# ---------------------
+#   curl -sk -X POST "https://YOUR_FRIGATE_HOST:8971/api/login" \
+#     -H "Content-Type: application/json" \
+#     -d '{"user": "YOUR_FRIGATE_USER", "password": "YOUR_FRIGATE_PASSWORD"}' \
+#     -c - | grep frigate_token | awk '{print $NF}'
+#
+# Add to secrets.yaml:
+#   frigate_jwt_token: eyJ...
+
+command_line:
+  - sensor:
+      name: "Frigate Camera Driveway Events"
+      unique_id: frigate_camera_driveway_events
+      scan_interval: 30
+      # Fetch events, pipe through preprocessor. Inline env vars keep
+      # the JWT out of the command_line value stored in HA state.
+      command: >
+        FRIGATE_BASE_URL=https://YOUR_FRIGATE_HOST:8971
+        FRIGATE_JWT=!secret frigate_jwt_token
+        curl -sk
+          -H "Authorization: Bearer !secret frigate_jwt_token"
+          "https://YOUR_FRIGATE_HOST:8971/api/events?limit=20&has_clip=1&camera=YOUR_CAMERA_NAME"
+        | FRIGATE_BASE_URL=https://YOUR_FRIGATE_HOST:8971
+          FRIGATE_JWT=!secret frigate_jwt_token
+          python3 /config/scripts/frigate_events.py
+      value_template: "{{ value_json.count }}"
+      json_attributes:
+        - count
+        - events
