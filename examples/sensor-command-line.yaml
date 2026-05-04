@@ -1,4 +1,4 @@
-# Frigate AI Event Card — command_line sensor
+# Frigate AI Event Card - command_line sensor
 #
 # This is the RECOMMENDED approach. It uses curl to fetch Frigate events and
 # pipes them through frigate_events.py, which caches snapshots locally so

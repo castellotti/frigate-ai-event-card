@@ -6,11 +6,11 @@ A Lovelace card that displays a filmstrip of recent Frigate detection events wit
 
 ## Features
 
-- **Filmstrip** — scrollable or auto-sized row of event thumbnails
-- **AI descriptions** — rendered via `<ha-markdown>` in a click-to-open dialog
-- **HLS clip playback** — inline video dialog via HA's Frigate VOD proxy; no extra credentials needed
-- **Vision-provider agnostic** — works with Ollama, OpenAI, Anthropic, Gemini, or any provider Frigate supports
-- **No build step** — single vanilla JS file, drop-in install
+- **Filmstrip** - scrollable or auto-sized row of event thumbnails
+- **AI descriptions** - rendered via `<ha-markdown>` in a click-to-open dialog
+- **HLS clip playback** - inline video dialog via HA's Frigate VOD proxy; no extra credentials needed
+- **Vision-provider agnostic** - works with Ollama, OpenAI, Anthropic, Gemini, or any provider Frigate supports
+- **No build step** - single vanilla JS file, drop-in install
 
 ## Usage
 

@@ -2,7 +2,7 @@
 #
 # These go in /srv/frigate/config/config.yml and require Frigate 0.17+.
 # Pick ONE provider block and add it to your Frigate config.
-# Each block is self-contained — only one genai: key is supported per config.
+# Each block is self-contained - only one genai: key is supported per config.
 #
 # Docs: https://docs.frigate.video/configuration/genai/
 
