@@ -18,8 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `<ha-markdown>` rendering for AI descriptions
 - Click snapshot (when `frigate_slug` set) to open HLS clip player via HA VOD proxy
 - HLS playback via hls.js (lazy-loaded from CDN), custom `SignedLoader` injects `authSig` into segment requests
-- Expandable `<details>` list with per-event thumbnail, description, metadata, and clip button
-- `show_details`, `show_metadata`, `filter_no_description` display toggles
+- `show_metadata`, `filter_no_description` display toggles
 - `provider_label` badge for displaying vision model attribution
 - `clip_button_text` customization
 - `window.customCards` registration for Lovelace card picker

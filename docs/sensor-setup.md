@@ -22,49 +22,52 @@ The token is valid for approximately 56 years and survives Frigate container res
 frigate_jwt_token: eyJ...your_token_here...
 ```
 
-## Step 3: Install `frigate_events.py`
+## Step 3: Install `frigate_events.py` and the wrapper script
 
-Copy [`examples/frigate_events.py`](../examples/frigate_events.py) to `/config/scripts/frigate_events.py` on your HA host. Make it executable:
+Copy [`examples/frigate_events.py`](../examples/frigate_events.py) to `/config/scripts/frigate_events.py` on your HA host.
+
+Create a wrapper script at `/config/scripts/fetch_frigate_events.sh` that calls curl and pipes the output through the preprocessor. HA's `command_line` platform does **not** expand `!secret` tags inside command strings, so the JWT must live in the script directly or in a file readable by HA:
 
 ```bash
-chmod +x /config/scripts/frigate_events.py
+#!/bin/sh
+FRIGATE_BASE_URL="https://YOUR_FRIGATE_HOST:8971"
+FRIGATE_JWT="eyJ...your_token_here..."
+curl -sk \
+  -H "Authorization: Bearer $FRIGATE_JWT" \
+  "$FRIGATE_BASE_URL/api/events?limit=20&has_clip=1&camera=YOUR_CAMERA_NAME" \
+| FRIGATE_BASE_URL="$FRIGATE_BASE_URL" FRIGATE_JWT="$FRIGATE_JWT" \
+  python3 /config/scripts/frigate_events.py
 ```
 
-The script:
+Make both files executable:
+
+```bash
+chmod +x /config/scripts/frigate_events.py /config/scripts/fetch_frigate_events.sh
+```
+
+The preprocessor:
 1. Reads the raw Frigate events JSON array from stdin
 2. Downloads and caches full-frame snapshots (no detection bbox) to `/config/www/frigate_thumbnails/`
 3. Outputs a reshaped JSON object with `count` and `events` keys for the HA sensor
 
-**Environment variables used by the script:**
-
-| Variable | Description |
-|---|---|
-| `FRIGATE_BASE_URL` | Full base URL, e.g. `https://192.0.2.1:8971` |
-| `FRIGATE_JWT` | JWT token from Step 1 |
-
-## Step 4: Add the REST Sensor
+## Step 4: Add the `command_line` Sensor
 
 Add to `configuration.yaml` (or a file included by it):
 
 ```yaml
-rest:
-  - scan_interval: 30
-    resource: "https://YOUR_FRIGATE_HOST:8971/api/events?limit=20&has_clip=1&camera=YOUR_CAMERA_NAME"
-    headers:
-      Authorization: "Bearer !secret frigate_jwt_token"
-    verify_ssl: false
-    sensor:
-      - name: "Frigate Camera Front Events"
-        unique_id: frigate_camera_front_events
-        value_template: "{{ value_json | length }}"
-        command: "python3 /config/scripts/frigate_events.py"
-        json_attributes_path: "$"
-        json_attributes:
-          - count
-          - events
+command_line:
+  - sensor:
+      name: "Frigate Camera Front Events"
+      unique_id: frigate_camera_front_events
+      scan_interval: 30
+      command: "/bin/sh /config/scripts/fetch_frigate_events.sh"
+      value_template: "{{ value_json.count }}"
+      json_attributes:
+        - count
+        - events
 ```
 
-See [`examples/sensor-rest.yaml`](../examples/sensor-rest.yaml) for the full annotated template.
+See [`examples/sensor-command-line.yaml`](../examples/sensor-command-line.yaml) for the full annotated template.
 
 ## Step 5: Restart Home Assistant
 

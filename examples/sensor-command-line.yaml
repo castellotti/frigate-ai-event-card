@@ -1,41 +1,47 @@
-# Frigate AI Event Card — command_line sensor variant
+# Frigate AI Event Card — command_line sensor
 #
-# Use this instead of the REST sensor if you are on an older HA version that
-# does not support the modern rest: platform, or if you prefer curl + a shell
-# script.
+# This is the RECOMMENDED approach. It uses curl to fetch Frigate events and
+# pipes them through frigate_events.py, which caches snapshots locally so
+# thumbnails load without cross-origin auth issues.
 #
-# Prerequisites
-# -------------
-# - frigate_events.py installed at /config/scripts/frigate_events.py
-# - FRIGATE_BASE_URL and FRIGATE_JWT set in the environment, OR pass them
-#   inline as shown below.
+# HOW IT WORKS
+# ------------
+# curl fetches the raw Frigate events JSON, then piped to frigate_events.py
+# which: (1) downloads each snapshot to /config/www/frigate_thumbnails/,
+# (2) reshapes the JSON into the shape the card expects, and (3) prints the
+# result to stdout for HA to parse as sensor attributes.
 #
-# HOW TO GENERATE A JWT
-# ---------------------
-#   curl -sk -X POST "https://YOUR_FRIGATE_HOST:8971/api/login" \
-#     -H "Content-Type: application/json" \
-#     -d '{"user": "YOUR_FRIGATE_USER", "password": "YOUR_FRIGATE_PASSWORD"}' \
-#     -c - | grep frigate_token | awk '{print $NF}'
+# IMPORTANT: HA's command_line platform does NOT expand !secret tags inside
+# the command string. Store your JWT in a shell environment variable or a
+# plain-text file readable by HA. The recommended approach is a wrapper script
+# (see below).
 #
-# Add to secrets.yaml:
-#   frigate_jwt_token: eyJ...
+# HOW TO USE
+# ----------
+# 1. Generate a Frigate JWT (see docs/sensor-setup.md for the full command).
+#
+# 2. Create a wrapper script at /config/scripts/fetch_frigate_events.sh:
+#
+#      #!/bin/sh
+#      FRIGATE_BASE_URL="https://YOUR_FRIGATE_HOST:8971"
+#      FRIGATE_JWT="eyJ...your_token_here..."
+#      curl -sk \
+#        -H "Authorization: Bearer $FRIGATE_JWT" \
+#        "$FRIGATE_BASE_URL/api/events?limit=20&has_clip=1&camera=YOUR_CAMERA_NAME" \
+#      | FRIGATE_BASE_URL="$FRIGATE_BASE_URL" FRIGATE_JWT="$FRIGATE_JWT" \
+#        python3 /config/scripts/frigate_events.py
+#
+# 3. Make it executable:
+#      chmod +x /config/scripts/fetch_frigate_events.sh
+#
+# 4. Add the sensor below to configuration.yaml and restart HA.
 
 command_line:
   - sensor:
       name: "Frigate Camera Driveway Events"
       unique_id: frigate_camera_driveway_events
       scan_interval: 30
-      # Fetch events, pipe through preprocessor. Inline env vars keep
-      # the JWT out of the command_line value stored in HA state.
-      command: >
-        FRIGATE_BASE_URL=https://YOUR_FRIGATE_HOST:8971
-        FRIGATE_JWT=!secret frigate_jwt_token
-        curl -sk
-          -H "Authorization: Bearer !secret frigate_jwt_token"
-          "https://YOUR_FRIGATE_HOST:8971/api/events?limit=20&has_clip=1&camera=YOUR_CAMERA_NAME"
-        | FRIGATE_BASE_URL=https://YOUR_FRIGATE_HOST:8971
-          FRIGATE_JWT=!secret frigate_jwt_token
-          python3 /config/scripts/frigate_events.py
+      command: "/bin/sh /config/scripts/fetch_frigate_events.sh"
       value_template: "{{ value_json.count }}"
       json_attributes:
         - count

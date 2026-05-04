@@ -18,8 +18,7 @@ Full option reference for `frigate-ai-event-card`.
 | `scrollable` | boolean | `false` | When `true`, the filmstrip wraps in a horizontally scrollable container and shows all filtered events (ignores `limit`) |
 | `time_window` | string | `all` | Only show events whose `start_time` falls within this window. Values: `all`, `24h`, `7d`, `30d`, or a custom duration like `2h`, `15m`, `3d` |
 | `filter_no_description` | boolean | `true` | When `true`, events with an empty `description` field are hidden. Set to `false` to show all events with a `_No description yet._` placeholder |
-| `show_details` | boolean | `true` | When `true`, renders an expandable `<details>` list below the filmstrip with full thumbnails, descriptions, and clip buttons |
-| `show_metadata` | boolean | `true` | When `true`, shows label, sub_label, plate, date, and zones in dialogs and the details list |
+| `show_metadata` | boolean | `true` | When `true`, shows label, sub_label, plate, date, and zones in dialogs |
 | `provider_label` | string | — | Small attribution badge displayed below the filmstrip, e.g. `Powered by Qwen3-VL`. Styled with `font-size: 11px; opacity: 0.7` |
 
 ## Clip Playback Options
@@ -27,7 +26,7 @@ Full option reference for `frigate-ai-event-card`.
 | Option | Type | Default | Description |
 |---|---|---|---|
 | `frigate_slug` | string | — | HA Frigate integration client ID (the `slug` used in the VOD proxy path). When set, enables the clip player: clicking the snapshot in the dialog opens an HLS video. When absent, the clip button and play overlay are hidden |
-| `clip_button_text` | string | `▶ Watch clip` | Text for the clip button in the details list |
+| `clip_button_text` | string | `▶ Watch clip` | Label for the clip button in the image dialog |
 
 ## Validation Rules
 
@@ -48,7 +47,6 @@ scrollable: false
 thumbnail_height: 100
 time_window: 7d
 filter_no_description: true
-show_details: true
 show_metadata: true
 frigate_slug: frigate
 clip_button_text: "▶ Watch clip"

@@ -69,7 +69,6 @@ frigate_slug: frigate
 | `thumbnail_height` | integer | `80` | Thumbnail height in pixels |
 | `time_window` | string | `all` | Filter: `24h`, `7d`, `30d`, `all`, or `<N>m`/`<N>h`/`<N>d` |
 | `filter_no_description` | boolean | `true` | Hide events without an AI description |
-| `show_details` | boolean | `true` | Show expandable event list below filmstrip |
 | `show_metadata` | boolean | `true` | Show zones/plate/sub_label in dialogs |
 | `frigate_slug` | string | — | HA Frigate integration client ID. Enables clip playback |
 | `clip_button_text` | string | `▶ Watch clip` | Label for the clip button |

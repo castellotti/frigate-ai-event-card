@@ -1,5 +1,19 @@
 # Frigate AI Event Card — REST sensor template
 #
+# HOW IT WORKS
+# ------------
+# The REST sensor fetches the raw Frigate events JSON every 30 seconds and
+# stores it as sensor attributes. Because HA's rest: platform does not support
+# piping the response through an external script, the reshaping (snapshot
+# caching, field mapping) must happen in a value_template inline OR you should
+# use the command_line sensor variant (sensor-command-line.yaml) which calls
+# curl + frigate_events.py together.
+#
+# This file shows the pure REST approach using a value_template to extract
+# what the card needs directly from the raw Frigate response. If you want
+# snapshot caching (recommended for thumbnail auth — see docs/sensor-setup.md),
+# use sensor-command-line.yaml instead.
+#
 # HOW TO USE
 # ----------
 # 1. Generate a Frigate JWT:
@@ -11,15 +25,18 @@
 # 2. Add the token to secrets.yaml:
 #      frigate_jwt_token: eyJ...
 #
-# 3. Copy the sensor block below into configuration.yaml (under a `rest:` key)
+# 3. Copy this sensor block into configuration.yaml (under a `rest:` key)
 #    or into a separate included file.
 #
-# 4. Install frigate_events.py to /config/scripts/ (see examples/frigate_events.py).
+# 4. Restart Home Assistant (rest sensors require a full restart).
 #
-# 5. Restart Home Assistant (rest sensors require a full restart).
+# NOTE: verify_ssl: false is needed if Frigate uses a self-signed certificate.
+# Remove it if your Frigate instance has a trusted cert.
 #
-# NOTE: verify_ssl: false is needed because Frigate typically uses a self-signed
-# certificate. If your Frigate instance has a trusted cert, remove that line.
+# NOTE: thumbnail_url here points directly at Frigate. This works only if the
+# browser holds a valid frigate_token cookie. For reliable same-origin
+# thumbnails, use the command_line approach with frigate_events.py which
+# caches snapshots to /config/www/. See docs/sensor-setup.md.
 
 rest:
   - scan_interval: 30
@@ -30,15 +47,7 @@ rest:
     sensor:
       - name: "Frigate Camera Front Events"
         unique_id: frigate_camera_front_events
-        # The value_template sets the sensor state to the event count.
-        # Attributes are populated by the command_line preprocessor below.
         value_template: "{{ value_json | length }}"
-        # Pipe the raw Frigate JSON through the preprocessor, which caches
-        # snapshots locally and reshapes the payload for the card.
-        # Remove the command line if you prefer to shape the JSON inline via
-        # value_template / json_attributes_path instead.
-        command: "python3 /config/scripts/frigate_events.py"
         json_attributes_path: "$"
         json_attributes:
-          - count
           - events

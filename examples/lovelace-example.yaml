@@ -3,7 +3,7 @@
 # ── Example 1: Minimal ───────────────────────────────────────────────────────
 # Just entity + title. All other options use defaults.
 # limit: auto fills available width; filter_no_description: true hides events
-# without a description; show_details: true renders the expandable list.
+# without a description.
 - type: custom:frigate-ai-event-card
   entity: sensor.frigate_camera_front_events
   title: Front Door
@@ -18,7 +18,6 @@
   thumbnail_height: 100
   time_window: 7d
   filter_no_description: true
-  show_details: true
   show_metadata: true
   frigate_slug: frigate
   clip_button_text: "▶ Watch clip"

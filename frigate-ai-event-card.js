@@ -168,9 +168,9 @@
         </style>
 
         <ha-card>
-          ${cfg.title ? `<h3>${cfg.title.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</h3>` : ''}
+          ${cfg.title ? `<h3>${this._esc(cfg.title)}</h3>` : ''}
           <div class="filmstrip${cfg.scrollable ? ' filmstrip-scroll' : ''}" id="filmstrip"></div>
-          ${cfg.provider_label ? `<div class="provider-label">${cfg.provider_label.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>` : ''}
+          ${cfg.provider_label ? `<div class="provider-label">${this._esc(cfg.provider_label)}</div>` : ''}
         </ha-card>
 
         <dialog id="dlg">
@@ -285,6 +285,7 @@
       }
 
       let evts = (state.attributes.events || [])
+        .slice()
         .sort((a, b) => b.start_time - a.start_time);
 
       const windowSecs = this._parseWindowSecs(cfg.time_window);
@@ -500,6 +501,7 @@
         .replace(/&/g, '&amp;').replace(/</g, '&lt;')
         .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
+
 
     disconnectedCallback() {
       if (this._resizeObserver) {
