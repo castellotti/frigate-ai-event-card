@@ -322,6 +322,7 @@
       }
 
       this._evts = evts;
+      this._lastSlotCount = 0;
       this._renderFilmstrip();
     }
 
@@ -395,7 +396,7 @@
       } else {
         const noDesc = document.createElement('p');
         noDesc.className = 'no-desc';
-        noDesc.textContent = '_No description yet._';
+        noDesc.innerHTML = '<em>No description yet.</em>';
         this._dlgMd.appendChild(noDesc);
       }
 
@@ -501,7 +502,7 @@
       if (window.Hls) return Promise.resolve(window.Hls);
       return new Promise((resolve, reject) => {
         const s = document.createElement('script');
-        s.src = 'https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js';
+        s.src = 'https://cdn.jsdelivr.net/npm/hls.js@1.6.16/dist/hls.min.js';
         s.onload = () => resolve(window.Hls);
         s.onerror = () => reject(new Error('Failed to load hls.js'));
         document.head.appendChild(s);

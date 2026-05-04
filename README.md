@@ -95,28 +95,23 @@ The card reads `state.attributes.events` from a configured HA sensor. Each event
 
 > **Important:** `thumbnail_url` must be loadable from an `<img>` tag in HA context (same-origin). The recommended approach is to cache snapshots to `/config/www/` — see [`docs/sensor-setup.md`](docs/sensor-setup.md).
 
-### REST sensor example
+### Sensor example
 
 ```yaml
-# examples/sensor-rest.yaml — see full file for comments
-rest:
-  - scan_interval: 30
-    resource: "https://YOUR_FRIGATE_HOST:8971/api/events?limit=20&has_clip=1"
-    headers:
-      Authorization: "Bearer !secret frigate_jwt_token"
-    verify_ssl: false
-    sensor:
-      - name: "Frigate Camera Front Events"
-        unique_id: frigate_camera_front_events
-        value_template: "{{ value_json | length }}"
-        json_attributes_path: "$"
-        command: "python3 /config/scripts/frigate_events.py"
-        json_attributes:
-          - count
-          - events
+# examples/sensor-command-line.yaml — see full file for comments
+command_line:
+  - sensor:
+      name: "Frigate Camera Front Events"
+      unique_id: frigate_camera_front_events
+      scan_interval: 30
+      command: "/bin/sh /config/scripts/fetch_frigate_events.sh"
+      value_template: "{{ value_json.count }}"
+      json_attributes:
+        - count
+        - events
 ```
 
-See [`examples/sensor-rest.yaml`](examples/sensor-rest.yaml) and [`docs/sensor-setup.md`](docs/sensor-setup.md) for step-by-step setup.
+See [`examples/sensor-command-line.yaml`](examples/sensor-command-line.yaml) and [`docs/sensor-setup.md`](docs/sensor-setup.md) for step-by-step setup including the wrapper script and `frigate_events.py` preprocessor.
 
 ## Frigate GenAI Setup
 

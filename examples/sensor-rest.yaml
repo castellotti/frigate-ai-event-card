@@ -38,6 +38,16 @@
 # thumbnails, use the command_line approach with frigate_events.py which
 # caches snapshots to /config/www/. See docs/sensor-setup.md.
 
+# NOTE: The raw Frigate events API returns a JSON array at the root, not an
+# object. HA's rest: platform cannot pipe the response through an external
+# script for reshaping, so snapshot caching and field mapping are not
+# possible here. Use sensor-command-line.yaml (with frigate_events.py) for
+# the recommended approach that produces the correct sensor attribute shape.
+#
+# This pure-REST variant stores the count only; the card's event list will
+# not populate without the `events` attribute produced by frigate_events.py.
+# It is included here for reference only.
+
 rest:
   - scan_interval: 30
     resource: "https://YOUR_FRIGATE_HOST:8971/api/events?limit=20&has_clip=1&camera=YOUR_CAMERA_NAME"
@@ -48,6 +58,3 @@ rest:
       - name: "Frigate Camera Front Events"
         unique_id: frigate_camera_front_events
         value_template: "{{ value_json | length }}"
-        json_attributes_path: "$"
-        json_attributes:
-          - events
