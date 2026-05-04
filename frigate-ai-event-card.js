@@ -1,5 +1,13 @@
 (() => {
   const VERSION = '1.0.0';
+  const TAG = 'frigate-ai-event-card';
+  const THUMB_OVERHEAD = 8; // 2px margin + 2px border, each side
+  const SPINNER_HTML = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
+      <path d="M12 2 a10 10 0 0 1 10 10" stroke-opacity="1"/>
+    </svg>
+    Loading clip&hellip;`;
 
   console.info(
     `%c FRIGATE-AI-EVENT-CARD %c v${VERSION} `,
@@ -9,7 +17,7 @@
 
   window.customCards = window.customCards || [];
   window.customCards.push({
-    type: 'frigate-ai-event-card',
+    type: TAG,
     name: 'Frigate AI Event Card',
     description: 'Filmstrip of recent Frigate events with AI-generated descriptions and clip playback.',
     preview: false,
@@ -21,33 +29,37 @@
       super();
       this._shadow = this.attachShadow({ mode: 'open' });
       this._lastIds = '';
+      this._lastState = null;
+      this._lastSlotCount = 0;
       this._built = false;
       this._hlsInstance = null;
       this._resizeObserver = null;
       this._thumbAspect = 16 / 9;
+      this._thumbAspectKnown = false;
       this._evts = [];
+      this._windowSecs = Infinity;
     }
 
     setConfig(config) {
       const entity = config.entity || config.sensor;
-      if (!entity) throw new Error('frigate-ai-event-card: entity is required');
+      if (!entity) throw new Error(`${TAG}: entity is required`);
 
       const tw = config.time_window !== undefined ? String(config.time_window) : 'all';
       if (!/^(all|24h|7d|30d|\d+[mhd])$/.test(tw)) {
-        throw new Error(`frigate-ai-event-card: invalid time_window "${tw}"`);
+        throw new Error(`${TAG}: invalid time_window "${tw}"`);
       }
 
       const rawLimit = config.limit !== undefined ? config.limit : 'auto';
       if (rawLimit !== 'auto') {
         const n = Number(rawLimit);
         if (!Number.isInteger(n) || n < 1) {
-          throw new Error('frigate-ai-event-card: limit must be "auto" or a positive integer');
+          throw new Error(`${TAG}: limit must be "auto" or a positive integer`);
         }
       }
 
       const thumbH = config.thumbnail_height !== undefined ? Number(config.thumbnail_height) : 80;
       if (!Number.isInteger(thumbH) || thumbH < 1) {
-        throw new Error('frigate-ai-event-card: thumbnail_height must be a positive integer');
+        throw new Error(`${TAG}: thumbnail_height must be a positive integer`);
       }
 
       this._config = {
@@ -64,6 +76,8 @@
         provider_label: config.provider_label || null,
       };
 
+      this._windowSecs = this._parseWindowSecs(tw);
+
       if (!this._built) this._build();
     }
 
@@ -72,6 +86,13 @@
       const m = tw.match(/^(\d+)([mhd])$/);
       if (!m) return Infinity;
       return Number(m[1]) * { m: 60, h: 3600, d: 86400 }[m[2]];
+    }
+
+    _formatLabel(e) {
+      let label = (e.label || '').replace(/^\w/, c => c.toUpperCase());
+      if (e.sub_label) label += ' · ' + e.sub_label;
+      if (e.plate)     label += ' · ' + e.plate;
+      return label;
     }
 
     _build() {
@@ -106,7 +127,6 @@
           }
           .empty { color: var(--secondary-text-color); font-size: 13px; padding: 6px 0; display: block; }
           .provider-label { font-size: 11px; color: var(--secondary-text-color); opacity: 0.7; margin-top: 2px; }
-
           .no-desc { font-style: italic; color: #999; font-size: 13px; }
 
           dialog {
@@ -199,18 +219,13 @@
             <span class="dlg-title" id="dlg-vid-title"></span>
             <button class="dlg-close" id="dlg-vid-close">&#x2715;</button>
           </div>
-          <div class="vid-loading" id="dlg-vid-loading">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
-              <path d="M12 2 a10 10 0 0 1 10 10" stroke-opacity="1"/>
-            </svg>
-            Loading clip&hellip;
-          </div>
+          <div class="vid-loading" id="dlg-vid-loading">${SPINNER_HTML}</div>
           <video id="dlg-vid-el" controls playsinline style="display:none"></video>
         </dialog>
       `;
 
-      this._filmstrip = this._shadow.getElementById('filmstrip');
+      this._filmstrip    = this._shadow.getElementById('filmstrip');
+      this._dlgImgWrap   = this._shadow.getElementById('dlg-img-wrap');
 
       this._dlg      = this._shadow.getElementById('dlg');
       this._dlgImg   = this._shadow.getElementById('dlg-img');
@@ -239,18 +254,14 @@
         this._dlgVidEl.src = '';
         this._dlgVidEl.style.display = 'none';
         this._dlgVidLoading.style.display = '';
-        this._dlgVidLoading.innerHTML = `
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
-            <path d="M12 2 a10 10 0 0 1 10 10" stroke-opacity="1"/>
-          </svg>
-          Loading clip&hellip;`;
+        this._dlgVidLoading.innerHTML = SPINNER_HTML;
         if (this._hlsInstance) {
           this._hlsInstance.destroy();
           this._hlsInstance = null;
         }
         this._dlgVid.close();
       };
+      this._closeVid = closeVid;
       this._shadow.getElementById('dlg-vid-close').addEventListener('click', closeVid);
       this._dlgVid.addEventListener('click', ev => {
         const r = this._dlgVid.getBoundingClientRect();
@@ -281,16 +292,19 @@
 
       if (!state || state.state === 'unavailable' || state.state === 'unknown') {
         fs.innerHTML = '<span class="empty">⚠️ Sensor unavailable</span>';
+        this._lastState = null;
         return;
       }
+
+      if (state === this._lastState) return;
+      this._lastState = state;
 
       let evts = (state.attributes.events || [])
         .slice()
         .sort((a, b) => b.start_time - a.start_time);
 
-      const windowSecs = this._parseWindowSecs(cfg.time_window);
-      if (windowSecs !== Infinity) {
-        const cutoff = Date.now() / 1000 - windowSecs;
+      if (this._windowSecs !== Infinity) {
+        const cutoff = Date.now() / 1000 - this._windowSecs;
         evts = evts.filter(e => e.start_time >= cutoff);
       }
 
@@ -313,26 +327,31 @@
 
     _renderFilmstrip() {
       const evts = this._evts;
-      if (!evts || evts.length === 0) return;
       const cfg = this._config;
       const fs = this._filmstrip;
 
       let displayEvts;
+      let slotCount;
       if (cfg.scrollable) {
         displayEvts = evts;
+        slotCount = evts.length;
       } else if (cfg.limit === 'auto') {
         const fsWidth = fs.offsetWidth;
         if (fsWidth === 0) {
           displayEvts = evts;
+          slotCount = evts.length;
         } else {
           const thumbW = Math.round(cfg.thumbnail_height * this._thumbAspect);
-          // 2px margin each side + 2px border each side = 8px overhead per thumb
-          const slots = Math.max(1, Math.floor(fsWidth / (thumbW + 8)));
-          displayEvts = evts.slice(0, slots);
+          slotCount = Math.max(1, Math.floor(fsWidth / (thumbW + THUMB_OVERHEAD)));
+          displayEvts = evts.slice(0, slotCount);
         }
       } else {
-        displayEvts = evts.slice(0, cfg.limit);
+        slotCount = cfg.limit;
+        displayEvts = evts.slice(0, slotCount);
       }
+
+      if (slotCount === this._lastSlotCount && fs.children.length === displayEvts.length) return;
+      this._lastSlotCount = slotCount;
 
       fs.innerHTML = '';
       displayEvts.forEach((e, i) => {
@@ -342,10 +361,11 @@
         img.alt = e.label || '';
         img.title = e.label || '';
         img.addEventListener('click', () => this._openImage(e));
-        if (i === 0) {
+        if (i === 0 && !this._thumbAspectKnown) {
           img.addEventListener('load', () => {
             if (img.naturalWidth && img.naturalHeight) {
               this._thumbAspect = img.naturalWidth / img.naturalHeight;
+              this._thumbAspectKnown = true;
             }
           });
         }
@@ -356,18 +376,13 @@
     _openImage(e) {
       const cfg = this._config;
       const hasClip = !!cfg.frigate_slug;
+      const label = this._formatLabel(e);
+      const date = new Date(e.start_time * 1000).toLocaleString();
 
       this._dlgImg.src = e.thumbnail_url;
       this._dlgImg.classList.toggle('clickable', hasClip);
-
-      const wrap = this._shadow.getElementById('dlg-img-wrap');
-      wrap.classList.toggle('has-clip', hasClip);
+      this._dlgImgWrap.classList.toggle('has-clip', hasClip);
       this._dlgImg.onclick = hasClip ? () => this._openVideo(e) : null;
-
-      let label = (e.label || '').replace(/^\w/, c => c.toUpperCase());
-      if (e.sub_label) label += ' · ' + e.sub_label;
-      if (e.plate)     label += ' · ' + e.plate;
-      const date = new Date(e.start_time * 1000).toLocaleString();
 
       this._dlgTitle.textContent = label + ' · ' + date;
       this._dlgCam.textContent = cfg.title || '';
@@ -403,9 +418,7 @@
 
     async _openVideo(e) {
       const cfg = this._config;
-      let label = (e.label || '').replace(/^\w/, c => c.toUpperCase());
-      if (e.sub_label) label += ' · ' + e.sub_label;
-      if (e.plate)     label += ' · ' + e.plate;
+      const label = this._formatLabel(e);
       const date = new Date(e.start_time * 1000).toLocaleString();
       this._dlgVidTitle.textContent = label + ' · ' + date + (cfg.title ? ' · ' + cfg.title : '');
 
@@ -418,10 +431,9 @@
 
       try {
         const slug = cfg.frigate_slug;
-        const camera = e.camera;
         const start = Math.floor(e.start_time);
         const end = Math.floor(e.end_time || (e.start_time + 60));
-        const vodPath = `/api/frigate/${slug}/vod/${camera}/start/${start}/end/${end}/index.m3u8`;
+        const vodPath = `/api/frigate/${slug}/vod/${e.camera}/start/${start}/end/${end}/index.m3u8`;
 
         const signed = await this._hass.connection.sendMessagePromise({
           type: 'auth/sign_path',
@@ -433,7 +445,7 @@
 
         await this._playHls(signedUrl, authSig);
       } catch (err) {
-        console.error('frigate-ai-event-card: video load failed', err);
+        console.error(`${TAG}: video load failed`, err);
         const msg = err.message || String(err);
         this._dlgVidLoading.innerHTML = '⚠️ ' + this._esc(
           msg.includes('404') ? 'No recording available for this event.' : 'Failed to load clip: ' + msg
@@ -502,12 +514,12 @@
         .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
-
     disconnectedCallback() {
       if (this._resizeObserver) {
         this._resizeObserver.disconnect();
         this._resizeObserver = null;
       }
+      if (this._closeVid) this._closeVid();
     }
 
     getCardSize() { return 3; }
@@ -517,7 +529,7 @@
     }
   }
 
-  if (!customElements.get('frigate-ai-event-card')) {
-    customElements.define('frigate-ai-event-card', FrigateAiEventCard);
+  if (!customElements.get(TAG)) {
+    customElements.define(TAG, FrigateAiEventCard);
   }
 })();
