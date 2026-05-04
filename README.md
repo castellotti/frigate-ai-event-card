@@ -3,11 +3,10 @@
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/castellotti/frigate-ai-event-card)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![GitHub Release](https://img.shields.io/github/v/release/castellotti/frigate-ai-event-card)](https://github.com/castellotti/frigate-ai-event-card/releases)
-[![GitHub Stars](https://img.shields.io/github/stars/castellotti/frigate-ai-event-card)](https://github.com/castellotti/frigate-ai-event-card/stargazers)
 
 A Lovelace card that displays a filmstrip of recent Frigate detection events with AI-generated descriptions and inline clip playback.
 
-![](docs/screenshot-filmstrip.png)
+![](docs/screenshot-filmstrip.png) ![](docs/screenshot-description.png)
 
 ## Features
 

@@ -10,9 +10,10 @@
     Loading clip&hellip;`;
 
   console.info(
-    `%c FRIGATE-AI-EVENT-CARD %c v${VERSION} `,
+    `%c FRIGATE-AI-EVENT-CARD %c v${VERSION} %c https://github.com/castellotti/frigate-ai-event-card `,
     'color: white; background: #03a9f4; font-weight: 700;',
-    'color: #03a9f4; background: white; font-weight: 700;'
+    'color: #03a9f4; background: white; font-weight: 700;',
+    'color: #03a9f4; background: none; font-weight: 400;'
   );
 
   window.customCards = window.customCards || [];
@@ -300,6 +301,7 @@
       this._lastState = state;
 
       let evts = (state.attributes.events || [])
+        .filter(e => e && e.id && e.start_time && e.thumbnail_url)
         .slice()
         .sort((a, b) => b.start_time - a.start_time);
 
@@ -359,8 +361,11 @@
         const img = document.createElement('img');
         img.className = 'thumb';
         img.src = e.thumbnail_url;
-        img.alt = e.label || '';
-        img.title = e.label || '';
+        const imgLabel = this._formatLabel(e);
+        const imgDate = new Date(e.start_time * 1000).toLocaleString();
+        img.alt = imgLabel || e.camera || 'Event';
+        img.title = imgLabel || '';
+        img.setAttribute('aria-label', (imgLabel || e.camera || 'Event') + ' - ' + imgDate);
         img.addEventListener('click', () => this._openImage(e));
         if (i === 0 && !this._thumbAspectKnown) {
           img.addEventListener('load', () => {
@@ -390,9 +395,17 @@
 
       this._dlgMd.innerHTML = '';
       if (e.description) {
-        const md = document.createElement('ha-markdown');
-        md.content = e.description;
-        this._dlgMd.appendChild(md);
+        if (customElements.get('ha-markdown')) {
+          const md = document.createElement('ha-markdown');
+          md.content = e.description;
+          this._dlgMd.appendChild(md);
+        } else {
+          const pre = document.createElement('p');
+          pre.className = 'dlg-md';
+          pre.style.whiteSpace = 'pre-wrap';
+          pre.textContent = e.description;
+          this._dlgMd.appendChild(pre);
+        }
       } else {
         const noDesc = document.createElement('p');
         noDesc.className = 'no-desc';
