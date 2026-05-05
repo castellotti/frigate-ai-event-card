@@ -111,8 +111,8 @@
             font-weight: 500;
             color: var(--primary-text-color);
           }
-          .filmstrip { padding: 2px 0 4px; }
-          .filmstrip-scroll { white-space: nowrap; overflow-x: auto; }
+          .filmstrip { padding: 2px 0 4px; text-align: center; }
+          .filmstrip-scroll { white-space: nowrap; overflow-x: auto; text-align: center; }
           .thumb {
             height: ${thumbH}px;
             border-radius: 6px;
