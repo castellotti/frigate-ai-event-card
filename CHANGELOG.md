@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   margin to minimise vertical and horizontal space. Intended for use inside sidebars, stacks,
   or any space-constrained context.
 
+### Fixed
+- Detail and video dialogs now render at 100% scale even when the card is inside a zoomed
+  container (e.g. `zoom: 0.6` on a `custom:stack-in-card` sidebar). Chrome cascades CSS
+  `zoom` into shadow DOM, causing dialogs to appear at the parent zoom level. The card now
+  measures its own scale at open time and applies the inverse zoom to the dialog.
+
 ## [1.0.1] - 2026-05-05
 
 ### Fixed

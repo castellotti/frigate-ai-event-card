@@ -383,6 +383,18 @@
       });
     }
 
+    // Returns the zoom factor needed to counteract any CSS zoom applied by ancestor elements.
+    // Chrome cascades zoom into shadow DOM, so modal dialogs inherit it even in the top layer.
+    // Comparing getBoundingClientRect().width (post-zoom visual px) to offsetWidth (pre-zoom
+    // layout px) gives the accumulated scale; the inverse restores 1:1 rendering.
+    _scaleCorrection() {
+      const ow = this.offsetWidth;
+      const rw = this.getBoundingClientRect().width;
+      if (!ow || !rw) return '1';
+      const scale = rw / ow;
+      return Math.abs(scale - 1) > 0.01 ? String(1 / scale) : '1';
+    }
+
     _openImage(e) {
       const cfg = this._config;
       const hasClip = !!cfg.frigate_slug;
@@ -431,7 +443,8 @@
       }
 
       this._dlgBody.scrollTop = 0;
-      this._dlg.showModal();
+      this._dlg.style.zoom = this._scaleCorrection();
+      if (!this._dlg.open) this._dlg.showModal();
     }
 
     async _openVideo(e) {
@@ -445,6 +458,7 @@
       this._dlgVidEl.style.display = 'none';
       this._dlgVidLoading.style.display = '';
       if (this._hlsInstance) { this._hlsInstance.destroy(); this._hlsInstance = null; }
+      this._dlgVid.style.zoom = this._scaleCorrection();
       this._dlgVid.showModal();
 
       try {
