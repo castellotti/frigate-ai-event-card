@@ -182,6 +182,27 @@
           .dlg-meta { font-size: 13px; color: #777; line-height: 1.7; }
           .dlg-meta strong { color: #bbb; }
           .dlg-meta em { color: #666; }
+          .dlg-nav {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            background: rgba(0,0,0,0.52); border: none; color: white;
+            cursor: pointer; padding: 0; z-index: 10; border-radius: 50%;
+            width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.15s, background 0.15s;
+          }
+          #dlg-img-wrap:hover .dlg-nav { opacity: 1; }
+          .dlg-nav:hover { background: rgba(0,0,0,0.78); }
+          .dlg-nav svg { width: 22px; height: 22px; fill: white; }
+          #dlg-nav-prev { left: 10px; }
+          #dlg-nav-next { right: 10px; }
+          .dlg-download {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%; background: rgba(255,255,255,0.07); border: 1px solid #3a3a3a;
+            color: #aaa; border-radius: 8px; padding: 9px 16px; box-sizing: border-box;
+            cursor: pointer; font-size: 13px; margin-top: 14px;
+            transition: background 0.15s, color 0.15s;
+          }
+          .dlg-download:hover { background: rgba(255,255,255,0.14); color: #e0e0e0; }
+          .dlg-download svg { width: 15px; height: 15px; fill: currentColor; flex-shrink: 0; }
           #dlg-vid { width: min(1100px, 96vw); background: #000; }
           #dlg-vid-el { display: block; width: 100%; max-height: 84vh; background: #000; flex-shrink: 0; }
           .vid-loading {
@@ -211,11 +232,21 @@
                 <svg viewBox="0 0 24 24"><polygon points="6,3 21,12 6,21"/></svg>
               </div>
             </div>
+            <button class="dlg-nav" id="dlg-nav-prev" aria-label="Previous event">
+              <svg viewBox="0 0 24 24"><polygon points="16,4 8,12 16,20"/></svg>
+            </button>
+            <button class="dlg-nav" id="dlg-nav-next" aria-label="Next event">
+              <svg viewBox="0 0 24 24"><polygon points="8,4 16,12 8,20"/></svg>
+            </button>
           </div>
           <div id="dlg-body">
             <div class="dlg-md" id="dlg-md"></div>
             <hr class="dlg-sep" id="dlg-sep">
             <div class="dlg-meta" id="dlg-meta"></div>
+            <button class="dlg-download" id="dlg-download" style="display:none">
+              <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+              Download clip
+            </button>
           </div>
         </dialog>
 
@@ -231,6 +262,9 @@
 
       this._filmstrip    = this._shadow.getElementById('filmstrip');
       this._dlgImgWrap   = this._shadow.getElementById('dlg-img-wrap');
+      this._dlgNavPrev   = this._shadow.getElementById('dlg-nav-prev');
+      this._dlgNavNext   = this._shadow.getElementById('dlg-nav-next');
+      this._dlgDownload  = this._shadow.getElementById('dlg-download');
 
       this._dlg      = this._shadow.getElementById('dlg');
       this._dlgImg   = this._shadow.getElementById('dlg-img');
@@ -370,7 +404,7 @@
         img.alt = imgLabel || e.camera || 'Event';
         img.title = imgLabel || '';
         img.setAttribute('aria-label', (imgLabel || e.camera || 'Event') + ' - ' + imgDate);
-        img.addEventListener('click', () => this._openImage(e));
+        img.addEventListener('click', () => this._openImage(e, i));
         if (i === 0 && !this._thumbAspectKnown) {
           img.addEventListener('load', () => {
             if (img.naturalWidth && img.naturalHeight) {
@@ -395,11 +429,13 @@
       return Math.abs(scale - 1) > 0.01 ? String(1 / scale) : '1';
     }
 
-    _openImage(e) {
+    _openImage(e, idx) {
       const cfg = this._config;
       const hasClip = !!cfg.frigate_slug;
       const label = this._formatLabel(e);
       const date = new Date(e.start_time * 1000).toLocaleString();
+      const evts = this._evts;
+      const total = evts ? evts.length : 0;
 
       this._dlgImg.src = e.thumbnail_url;
       this._dlgImg.classList.toggle('clickable', hasClip);
@@ -408,6 +444,21 @@
 
       this._dlgTitle.textContent = label + ' · ' + date;
       this._dlgCam.textContent = cfg.title || '';
+
+      const hasPrev = idx > 0;
+      const hasNext = idx < total - 1;
+      this._dlgNavPrev.style.display = hasPrev ? '' : 'none';
+      this._dlgNavNext.style.display = hasNext ? '' : 'none';
+      this._dlgNavPrev.onclick = hasPrev ? () => this._openImage(evts[idx - 1], idx - 1) : null;
+      this._dlgNavNext.onclick = hasNext ? () => this._openImage(evts[idx + 1], idx + 1) : null;
+
+      if (hasClip && e.id) {
+        this._dlgDownload.style.display = '';
+        this._dlgDownload.onclick = () => this._downloadClip(e);
+      } else {
+        this._dlgDownload.style.display = 'none';
+        this._dlgDownload.onclick = null;
+      }
 
       this._dlgMd.innerHTML = '';
       if (e.description) {
@@ -445,6 +496,40 @@
       this._dlgBody.scrollTop = 0;
       this._dlg.style.zoom = this._scaleCorrection();
       if (!this._dlg.open) this._dlg.showModal();
+    }
+
+    async _downloadClip(e) {
+      const cfg = this._config;
+      if (!cfg.frigate_slug || !e.id) return;
+      const btn = this._dlgDownload;
+      const restore = () => {
+        btn.disabled = false;
+        btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg> Download clip';
+      };
+      btn.disabled = true;
+      btn.textContent = 'Downloading…';
+      try {
+        const clipPath = `/api/frigate/${cfg.frigate_slug}/notifications/${e.id}/clip.mp4`;
+        const signed = await this._hass.connection.sendMessagePromise({
+          type: 'auth/sign_path', path: clipPath, expires: 300,
+        });
+        const resp = await fetch(signed.path);
+        if (!resp.ok) throw new Error(
+          resp.status === 404 ? 'No clip available for this event.' : `Download failed (${resp.status})`
+        );
+        const blob = await resp.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `frigate-${e.id}.mp4`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+        btn.textContent = '✓ Downloaded';
+        setTimeout(restore, 2500);
+      } catch (err) {
+        console.error(`${TAG}: clip download failed`, err);
+        btn.textContent = '⚠ ' + (err.message || 'Download failed');
+        setTimeout(restore, 3500);
+      }
     }
 
     async _openVideo(e) {
