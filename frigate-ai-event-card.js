@@ -1,5 +1,5 @@
 (() => {
-  const VERSION = '1.0.0';
+  const VERSION = '1.1.0';
   const TAG = 'frigate-ai-event-card';
   const THUMB_OVERHEAD = 8; // 2px margin + 2px border, each side
   const SPINNER_HTML = `
@@ -75,6 +75,7 @@
         frigate_slug: config.frigate_slug || null,
         clip_button_text: config.clip_button_text || '▶ Watch clip',
         provider_label: config.provider_label || null,
+        compact: config.compact === true,
       };
 
       this._windowSecs = this._parseWindowSecs(tw);
@@ -100,18 +101,21 @@
       this._built = true;
       const cfg = this._config;
       const thumbH = cfg.thumbnail_height;
+      const cardPad    = cfg.compact ? '4px 8px'   : '12px 16px 12px';
+      const h3Margin   = cfg.compact ? '0 0 3px'   : '0 0 8px';
+      const filmPad    = cfg.compact ? '0'         : '2px 0 4px';
 
       this._shadow.innerHTML = `
         <style>
           :host { display: block; }
-          ha-card { padding: 12px 16px 12px; box-sizing: border-box; }
+          ha-card { padding: ${cardPad}; box-sizing: border-box; }
           h3 {
-            margin: 0 0 8px;
+            margin: ${h3Margin};
             font-size: 14px;
             font-weight: 500;
             color: var(--primary-text-color);
           }
-          .filmstrip { padding: 2px 0 4px; text-align: center; }
+          .filmstrip { padding: ${filmPad}; text-align: center; }
           .filmstrip-scroll { white-space: nowrap; overflow-x: auto; text-align: center; }
           .thumb {
             height: ${thumbH}px;

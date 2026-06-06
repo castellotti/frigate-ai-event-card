@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-06-05
+
+### Added
+- `compact: true` config option — reduces card padding (`4px 8px` vs `12px 16px`) and title
+  margin to minimise vertical and horizontal space. Intended for use inside sidebars, stacks,
+  or any space-constrained context.
+
 ## [1.0.1] - 2026-05-05
 
 ### Fixed
